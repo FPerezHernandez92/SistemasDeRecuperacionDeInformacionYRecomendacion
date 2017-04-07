@@ -1,0 +1,153 @@
+---
+title: "Twitter"
+author: "FranciscoPérezHernández"
+date: "7/4/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Crear Credenciales
+
+Lo primero será ir al siguiente enlace https://apps.twitter.com y registrarnos para obtener nuestras credenciales quedando un fichero llamado "credenciales.R" con la siguiente estructura:
+```{r crear_credenciales, eval=FALSE}
+#Cargamos las librerías
+library("ROAuth")
+library("base64enc");
+library("twitteR");
+library("streamR");
+
+#Cargar parámetros de configuración
+reqURL <- "https://api.twitter.com/oauth/request_token"
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+options(httr_oauth_cache=T)
+
+#Cargar las credenciales obtenidas del paso anterior
+consumer_key <- "pegar aquí la credencial"
+consumer_secret <-"pegar aquí la credencial"
+access_token <-"pegar aquí la credencial"
+access_secret <-"pegar aquí la credencial"
+
+#Ejecutar la autenticación de TwitteR
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+#streamR authentication
+credentials_file <- "my_oauth.Rdata"
+if (file.exists(credentials_file)){
+  load(credentials_file)
+} else {
+  cred <- OAuthFactory$new(consumerKey = consumer_key, consumerSecret =
+                             consumer_secret, requestURL = reqURL, accessURL = accessURL, authURL = authURL)
+  cred$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+  save(cred, file = credentials_file)
+}
+```
+
+# Obtener datos de twitter
+
+```{r obtener_datos_de_twitter}
+# Cargar la librería específica de TwitterR
+library(twitteR);
+
+# Leer el fichero de credenciales creado anteriormente, ¡cuidado con la ruta del fichero!.
+source('../credenciales.R')
+
+# Función que permite buscar: #hastag, @usuarios, palabras
+tweets <- searchTwitter("#brexit", n=100, lang="en")
+
+# Quedarse solo con el primer tweet para datos concretos del mismo
+tweet <- tweets[[1]];
+# Mostrar la estructura del tweet
+#str(tweet)
+# Obtener el texto del tweet:
+tweet$getText()
+# Obtener información acerca del usuario:
+usuario <- getUser(tweet$getScreenName());
+# Mostrar la estructura del usuario
+#str(usuario)
+# Obtener el nombre del usuario
+usuario$getName()
+```
+
+# Instalación de paquetes necesarios
+
+```{r instalacion_de_paquetes_necesarios, eval=FALSE}
+# Instalar el paquete Sentiment
+if (!require('pacman')) install.packages('pacman&')
+pacman::p_load(devtools, installr)
+install.Rtools()
+install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
+install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
+if (!require('pacman')) install.packages('pacman')
+pacman::p_load(twitteR, sentiment, plyr, ggplot2, wordcloud, RColorBrewer, httpuv, RCurl, base64enc)
+options(RCurlOptions = list(cainfo = system.file('CurlSSL', 'cacert.pem', package = 'RCurl')))
+setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+setup_twitter_oauth(api_key,api_secret)
+```
+
+# Análisis de sentimientos
+
+## Sacar tweets
+
+Lo primero que vamos a hacer será sacar twetts sobre el brexit y sacar de ellos su texto
+```{r extraccion_de_tweets_sobre_brexit}
+tweets <- searchTwitter("#brexit", n=100, lang="en")
+texto_tweets = sapply(tweets, function(x) x$getText())
+```
+
+## Limpiado del texto
+
+Vamos a ver un ejemplo de los primeros tweets encontrados de como vamos limpiando el texto
+```{r limpiado_del_texto}
+head(texto_tweets)
+cat("\nEliminamos retweet\n")
+texto_tweets = gsub('(RT|via)((?:\\b\\W*@\\w+)+)', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminar usuarios\n")
+texto_tweets = gsub('@\\w+', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos puntuación\n")
+texto_tweets = gsub('[[:punct:]]', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos números\n")
+texto_tweets = gsub('[[:digit:]]', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos enlaces html\n")
+texto_tweets = gsub('http\\w+', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos espacios innecesarios\n")
+texto_tweets = gsub('[ \t]{2,}', '', texto_tweets)
+texto_tweets = gsub('^\\s+|\\s+$', '', texto_tweets)
+head(texto_tweets)
+
+#Función para eliminar posibles errores al pasar a minúscula
+try.error = function(x){
+  # creamos un missing value
+  y = NA
+  # tryCatch error
+  try_error = tryCatch(tolower(x), error=function(e) e)
+  # if not un error
+  if (!inherits(try_error, 'error'))
+    y = tolower(x)
+  return(y)
+}
+cat("\nPasamos a minúsucla si no hay error\n")
+texto_tweets = sapply(texto_tweets, try.error)
+head(texto_tweets)
+cat("\nEliminamos NAs en el texto\n")
+texto_tweets = texto_tweets[!is.na(texto_tweets)]
+names(texto_tweets) = NULL
+head(texto_tweets)
+```
+
+# Aplicamos el clasificador de sentimientos
+
+
+
+
+
+
+
