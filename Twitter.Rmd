@@ -9,6 +9,12 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Variable para indicar el número de tweets a sacar
+```{r}
+total_tweets_a_sacar = 10000
+```
+
+
 # Crear Credenciales
 
 Lo primero será ir al siguiente enlace https://apps.twitter.com y registrarnos para obtener nuestras credenciales quedando un fichero llamado "credenciales.R" con la siguiente estructura:
@@ -74,18 +80,19 @@ usuario$getName()
 
 # Instalación de paquetes necesarios
 
-```{r instalacion_de_paquetes_necesarios, eval=FALSE}
+```{r instalacion_de_paquetes_necesarios, echo=TRUE}
 # Instalar el paquete Sentiment
-if (!require('pacman')) install.packages('pacman&')
-pacman::p_load(devtools, installr)
-install.Rtools()
-install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
-install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
+require('pacman')
+#if (!require('pacman')) install.packages('pacman&')
+#pacman::p_load(devtools, installr)
+#install.Rtools()
+#install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
+#install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
 if (!require('pacman')) install.packages('pacman')
 pacman::p_load(twitteR, sentiment, plyr, ggplot2, wordcloud, RColorBrewer, httpuv, RCurl, base64enc)
 options(RCurlOptions = list(cainfo = system.file('CurlSSL', 'cacert.pem', package = 'RCurl')))
-setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
-setup_twitter_oauth(api_key,api_secret)
+#setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+#setup_twitter_oauth(api_key,api_secret)
 ```
 
 # Análisis de sentimientos
@@ -94,7 +101,7 @@ setup_twitter_oauth(api_key,api_secret)
 
 Lo primero que vamos a hacer será sacar twetts sobre el brexit y sacar de ellos su texto
 ```{r extraccion_de_tweets_sobre_brexit}
-tweets <- searchTwitter("#brexit", n=100, lang="en")
+tweets <- searchTwitter("#brexit", n=total_tweets_a_sacar, lang="en")
 texto_tweets = sapply(tweets, function(x) x$getText())
 ```
 
@@ -143,11 +150,66 @@ names(texto_tweets) = NULL
 head(texto_tweets)
 ```
 
-# Aplicamos el clasificador de sentimientos
+## Clasificador de sentimientos
 
+Ahora vamos a clasificar por emociones y obtener la mejor de ellas
+```{r clasificador_emociones}
+clasificacion_emociones = classify_emotion(texto_tweets, algorithm='bayes', prior=1.0)
+emociones = clasificacion_emociones[,7]
+# sustituimos NA's por 'unknown'
+emociones[is.na(emociones)] = 'unknown'
+```
 
+Clasificamos por popularidad los tweets y montamos el dataframe
+```{r clasificador_popularidad}
+clasificacion_popularidad = classify_polarity(texto_tweets, algorithm='bayes')
+popularidad = clasificacion_popularidad[,4]
+data = data.frame(text=texto_tweets, emotion=emociones, polarity=popularidad, stringsAsFactors=FALSE)
+data = within(data, emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
+```
 
+Vamos a mostrar una gráfica en función de la distribución de las emociones sacadas.
+```{r grafica_emociones}
+ggplot(data, aes(x=emotion)) +
+geom_bar(aes(y=..count.., fill=emotion)) +
+scale_fill_brewer(palette='Dark2') +
+labs(x='Emotion categories', y='Number of tweets') +
+ggtitle('Sentiment Analysis of Tweets about Brexit\n(classification by emotion)') +
+theme(plot.title = element_text(size=12, face='bold'))
+```
 
+Vamos a mostrar una gráfica en función de la distribución de la popularidad.
+```{r grafica_popularidad}
+ggplot(data, aes(x=polarity)) +
+geom_bar(aes(y=..count.., fill=polarity)) +
+scale_fill_brewer(palette='RdGy') +
+labs(x='Polarity categories', y='Number of tweets') +
+ggtitle('Sentiment Analysis of Tweets about Brexit\n(classification by polarity)') +
+theme(plot.title = element_text(size=12, face='bold'))
+```
 
+Ahora vamos a crear una nube de palabras para ver que es lo que más se usa. Lo primero será separar el texto por emociones y visualizar las palabras
+```{r nube_de_palabras, warning=FALSE}
+emociones_data = levels(factor(data$emotion))
+tama_emociones_data = length(emociones_data)
+documento_emociones = rep('', tama_emociones_data)
+for (i in 1:tama_emociones_data)
+{
+tmp = texto_tweets[emociones == emociones_data[i]]
+documento_emociones[i] = paste(tmp, collapse=' ')
+}
+ 
+# eliminamos palabras vacias como or,as,off...
+documento_emociones = removeWords(documento_emociones, stopwords('english'))
+# Creamos el corpus
+corpus = Corpus(VectorSource(documento_emociones))
+termdocumentmatrix = TermDocumentMatrix(corpus)
+termdocumentmatrix = as.matrix(termdocumentmatrix)
+colnames(termdocumentmatrix) = emociones_data
+ 
+# comparison word cloud
+comparison.cloud(termdocumentmatrix, colors = brewer.pal(tama_emociones_data, 'Dark2'),
+scale = c(3,.5), random.order = FALSE, title.size = 1.5)
 
+```
 
