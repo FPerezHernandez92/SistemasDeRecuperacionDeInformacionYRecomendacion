@@ -1,0 +1,338 @@
+---
+title: "Twitter"
+author: "Francisco Pérez Hernández. Cristina Zuheros Montes, ."
+date: "7/4/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Variable para indicar el número de tweets a sacar
+```{r}
+total_tweets_a_sacar = 10000
+```
+
+
+# Crear Credenciales
+
+Lo primero será ir al siguiente enlace https://apps.twitter.com y registrarnos para obtener nuestras credenciales quedando un fichero llamado "credenciales.R" con la siguiente estructura:
+```{r crear_credenciales, eval=FALSE}
+#Cargamos las librerías
+library("ROAuth")
+library("base64enc");
+library("twitteR");
+library("streamR");
+
+#Cargar parámetros de configuración
+reqURL <- "https://api.twitter.com/oauth/request_token"
+accessURL <- "https://api.twitter.com/oauth/access_token"
+authURL <- "https://api.twitter.com/oauth/authorize"
+options(httr_oauth_cache=T)
+
+#Cargar las credenciales obtenidas del paso anterior
+consumer_key <- "pegar aquÃ? la credencial"
+consumer_secret <-"pegar aquÃ? la credencial"
+access_token <-"pegar aquÃ? la credencial"
+access_secret <-"pegar aquÃ? la credencial"
+
+#Ejecutar la autenticación de TwitteR
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+#streamR authentication
+credentials_file <- "my_oauth.Rdata"
+if (file.exists(credentials_file)){
+  load(credentials_file)
+} else {
+  cred <- OAuthFactory$new(consumerKey = consumer_key, consumerSecret =
+                             consumer_secret, requestURL = reqURL, accessURL = accessURL, authURL = authURL)
+  cred$handshake(cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))
+  save(cred, file = credentials_file)
+}
+```
+
+# Obtener datos de twitter
+
+```{r obtener_datos_de_twitter}
+# Cargar la librería específica de TwitterR
+library(twitteR);
+
+# Leer el fichero de credenciales creado anteriormente, Â¡cuidado con la ruta del fichero!.
+source('credenciales.R')
+
+# FunciÃ³n que permite buscar: #hastag, @usuarios, palabras
+tweets <- searchTwitter("#brexit", n=100, lang="en")
+
+# Quedarse solo con el primer tweet para datos concretos del mismo
+tweet <- tweets[[1]];
+# Mostrar la estructura del tweet
+#str(tweet)
+# Obtener el texto del tweet:
+tweet$getText()
+# Obtener información acerca del usuario:
+usuario <- getUser(tweet$getScreenName());
+# Mostrar la estructura del usuario
+#str(usuario)
+# Obtener el nombre del usuario
+usuario$getName()
+```
+
+# Instalación de paquetes necesarios
+
+```{r instalacion_de_paquetes_necesarios, echo=TRUE}
+# Instalar el paquete Sentiment
+require('pacman')
+#if (!require('pacman')) install.packages('pacman&')
+#pacman::p_load(devtools, installr)
+#install.Rtools()
+#install_url('http://cran.r-project.org/src/contrib/Archive/Rstem/Rstem_0.4-1.tar.gz')
+#install_url('http://cran.r-project.org/src/contrib/Archive/sentiment/sentiment_0.2.tar.gz')
+if (!require('pacman')) install.packages('pacman')
+pacman::p_load(twitteR, sentiment, plyr, ggplot2, wordcloud, RColorBrewer, httpuv, RCurl, base64enc)
+options(RCurlOptions = list(cainfo = system.file('CurlSSL', 'cacert.pem', package = 'RCurl')))
+#setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+#setup_twitter_oauth(api_key,api_secret)
+```
+
+# AnÃ¡lisis de sentimientos
+
+## Sacar tweets
+
+Lo primero que vamos a hacer será sacar twetts sobre el brexit y sacar de ellos su texto
+```{r extraccion_de_tweets_sobre_brexit}
+tweets <- searchTwitter("#brexit", n=total_tweets_a_sacar, lang="en")
+texto_tweets = sapply(tweets, function(x) x$getText())
+```
+
+## Limpiado del texto
+
+Vamos a ver un ejemplo de los primeros tweets encontrados de como vamos limpiando el texto
+```{r limpiado_del_texto}
+head(texto_tweets)
+cat("\nEliminamos retweet\n")
+texto_tweets = gsub('(RT|via)((?:\\b\\W*@\\w+)+)', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminar usuarios\n")
+texto_tweets = gsub('@\\w+', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos puntuaciÃ³n\n")
+texto_tweets = gsub('[[:punct:]]', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos nÃºmeros\n")
+texto_tweets = gsub('[[:digit:]]', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos enlaces html\n")
+texto_tweets = gsub('http\\w+', '', texto_tweets)
+head(texto_tweets)
+cat("\nEliminamos espacios innecesarios\n")
+texto_tweets = gsub('[ \t]{2,}', '', texto_tweets)
+texto_tweets = gsub('^\\s+|\\s+$', '', texto_tweets)
+head(texto_tweets)
+
+#Función para eliminar posibles errores al pasar a minúscula
+try.error = function(x){
+  # creamos un missing value
+  y = NA
+  # tryCatch error
+  try_error = tryCatch(tolower(x), error=function(e) e)
+  # if not un error
+  if (!inherits(try_error, 'error'))
+    y = tolower(x)
+  return(y)
+}
+cat("\nPasamos a minúscula si no hay error\n")
+texto_tweets = sapply(texto_tweets, try.error)
+head(texto_tweets)
+cat("\nEliminamos NAs en el texto\n")
+texto_tweets = texto_tweets[!is.na(texto_tweets)]
+names(texto_tweets) = NULL
+head(texto_tweets)
+```
+
+## Clasificador de sentimientos
+
+Ahora vamos a clasificar por emociones y obtener la mejor de ellas
+```{r clasificador_emociones}
+clasificacion_emociones = classify_emotion(texto_tweets, algorithm='bayes', prior=1.0)
+emociones = clasificacion_emociones[,7]
+# sustituimos NA's por 'unknown'
+emociones[is.na(emociones)] = 'unknown'
+```
+
+Clasificamos por popularidad los tweets y montamos el dataframe
+```{r clasificador_popularidad}
+clasificacion_popularidad = classify_polarity(texto_tweets, algorithm='bayes')
+popularidad = clasificacion_popularidad[,4]
+data = data.frame(text=texto_tweets, emotion=emociones, polarity=popularidad, stringsAsFactors=FALSE)
+data = within(data, emotion <- factor(emotion, levels=names(sort(table(emotion), decreasing=TRUE))))
+```
+
+Vamos a mostrar una gráfica en función de la distribución de las emociones sacadas.
+```{r grafica_emociones}
+ggplot(data, aes(x=emotion)) +
+geom_bar(aes(y=..count.., fill=emotion)) +
+scale_fill_brewer(palette='Dark2') +
+labs(x='Emotion categories', y='Number of tweets') +
+ggtitle('Sentiment Analysis of Tweets about Brexit\n(classification by emotion)') +
+theme(plot.title = element_text(size=12, face='bold'))
+```
+
+Vamos a mostrar una gráfica en función de la distribución de la popularidad.
+```{r grafica_popularidad}
+ggplot(data, aes(x=polarity)) +
+geom_bar(aes(y=..count.., fill=polarity)) +
+scale_fill_brewer(palette='RdGy') +
+labs(x='Polarity categories', y='Number of tweets') +
+ggtitle('Sentiment Analysis of Tweets about Brexit\n(classification by polarity)') +
+theme(plot.title = element_text(size=12, face='bold'))
+```
+
+Ahora vamos a crear una nube de palabras para ver que es lo que más se usa. Lo primero será separar el texto por emociones y visualizar las palabras
+```{r nube_de_palabras, warning=FALSE}
+emociones_data = levels(factor(data$emotion))
+tama_emociones_data = length(emociones_data)
+documento_emociones = rep('', tama_emociones_data)
+for (i in 1:tama_emociones_data)
+{
+tmp = texto_tweets[emociones == emociones_data[i]]
+documento_emociones[i] = paste(tmp, collapse=' ')
+}
+ 
+# eliminamos palabras vacias como or,as,off...
+documento_emociones = removeWords(documento_emociones, stopwords('english'))
+# Creamos el corpus
+corpus = Corpus(VectorSource(documento_emociones))
+termdocumentmatrix = TermDocumentMatrix(corpus)
+termdocumentmatrix = as.matrix(termdocumentmatrix)
+colnames(termdocumentmatrix) = emociones_data
+ 
+# comparison word cloud
+comparison.cloud(termdocumentmatrix, colors = brewer.pal(tama_emociones_data, 'Dark2'),
+scale = c(3,.5), random.order = FALSE, title.size = 1.5)
+
+```
+
+#Análisis Android, iPhone y iPad. 
+Cargamos las librerías necesarias para dicho análisis. 
+```{r}
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(twitteR)
+```
+
+Vamos a trabajar con los mismos tweets y los almacenamos en una estructura de dataframe.
+```{r}
+tweets_df <- tbl_df(map_df(tweets, as.data.frame))
+```
+
+Creamos otra estructura de dataframe con aquellos tweets que han sido publicados desde iPhone, desde Android o desde iPad. 
+```{r}
+library(tidyr)
+tweets_iph_an_ipa <- tweets_df %>%
+  select(id, statusSource, text, created) %>%
+  extract(statusSource, "source", "Twitter for (.*?)<") %>%
+  filter(source %in% c("iPhone", "Android", "iPad"))
+```
+
+Podemos ver el número de tweets que se han publicado desde iPhone, Androir y iPad, siendo este último medio el menos utilizado. 
+```{r}
+num_iphone <- nrow(tweets_df %>%
+  select(id, statusSource, text, created) %>%
+  extract(statusSource, "source", "Twitter for (.*?)<") %>%
+  filter(source %in% "iPhone"))
+num_android <- nrow(tweets_df %>%
+  select(id, statusSource, text, created) %>%
+  extract(statusSource, "source", "Twitter for (.*?)<") %>%
+  filter(source %in% "Android"))
+num_ipad <- nrow(tweets_iph_an_ipa) - num_iphone - num_android
+num_iphone
+num_android
+num_ipad
+```
+
+Los tweets que obtenemos pertenecen a un mismo día y son publicados aproximadamente durante una hora. En la siguiente gráfica se muestran las publicaciones para iPhone, iPad y Android. 
+```{r}
+library(lubridate)
+library(scales)
+tweets_iph_an_ipa %>%
+  count(source, hour = created) %>%
+  mutate(percent = n / sum(n)) %>%
+  ggplot(aes(hour, percent, color = source)) +
+  geom_line() +
+  scale_y_continuous(labels = percent_format()) +
+  labs(x = "Hour of day (EST)",
+       y = "% of tweets",
+       color = "")
+```
+
+Podemos comparar la cantidad de tweets que se publican con y sin imágenes o links. Hay tendencia en los tres casos a que los tweets no contengan ni imágenes ni links. 
+```{r}
+library(stringr)
+tweet_picture_counts <- tweets_iph_an_ipa %>%
+  filter(!str_detect(text, '^"')) %>%
+  count(source,
+        picture = ifelse(str_detect(text, "t.co"),
+                         "Picture/link", "No picture/link"))
+
+ggplot(tweet_picture_counts, aes(source, n, fill = picture)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "", y = "Number of tweets", fill = "")
+```
+Ahora creamos un nuevo dataset donde cada línea muestra una palabra relevante de un tweets. De este modo, para un mismo tweet podremos tener varias filas en tweet_words. 
+```{r}
+library(tidytext)
+reg <- "([^A-Za-z\\d#@']|'(?![A-Za-z\\d#@]))"
+tweet_words <- tweets_iph_an_ipa %>%
+  filter(!str_detect(text, '^"')) %>%
+  mutate(text = str_replace_all(text, "https://t.co/[A-Za-z\\d]+|&amp;", "")) %>%
+  unnest_tokens(word, text, token = "regex", pattern = reg) %>%
+  filter(!word %in% stop_words$word,
+         str_detect(word, "[a-z]"))
+tweet_words
+```
+Podemos mostrar en una gráfica cuáles son las 20 palabras más relevantes de todas. 
+```{r}
+tweet_words %>%
+  count(word, sort = TRUE) %>%
+  head(20) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_bar(stat = "identity") +
+  ylab("Occurrences") +
+  coord_flip()
+```
+Finalmente podemos mostrar tres gráficas comparativas que representan las palabras más relevantes para Android, iPhone y iPad. Vemos que no hay grandes diferencias significativas y llama la atención que en los tres casos una de las palabras más usadas es rt para que la gente de difusión al propio tweet que se está publicando. 
+```{r}
+t_words_android <- tweet_words[which(tweet_words$source=="Android"),]
+t_words_iphone <- tweet_words[which(tweet_words$source=="iPhone"),]
+t_words_ipad <- tweet_words[which(tweet_words$source=="iPad"),]
+
+t_words_android %>%
+  count(word, sort = TRUE) %>%
+  head(20) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_bar(stat = "identity") +
+  ylab("Occurrences Android") +
+  coord_flip()
+
+t_words_iphone %>%
+  count(word, sort = TRUE) %>%
+  head(20) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_bar(stat = "identity") +
+  ylab("Occurrences iPhone") +
+  coord_flip()
+
+t_words_ipad %>%
+  count(word, sort = TRUE) %>%
+  head(20) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_bar(stat = "identity") +
+  ylab("Occurrences iPad") +
+  coord_flip()
+```
