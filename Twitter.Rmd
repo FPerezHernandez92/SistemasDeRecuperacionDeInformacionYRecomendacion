@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Variable para indicar el número de tweets a sacar
 ```{r}
-total_tweets_a_sacar = 10000
+total_tweets_a_sacar = 100
 ```
 
 
@@ -176,6 +176,7 @@ scale_fill_brewer(palette='Dark2') +
 labs(x='Emotion categories', y='Number of tweets') +
 ggtitle('Sentiment Analysis of Tweets about Brexit\n(classification by emotion)') +
 theme(plot.title = element_text(size=12, face='bold'))
+ggsave("./Twitter/images/sentimientos.png")
 ```
 
 Vamos a mostrar una gráfica en función de la distribución de la popularidad.
@@ -186,6 +187,7 @@ scale_fill_brewer(palette='RdGy') +
 labs(x='Polarity categories', y='Number of tweets') +
 ggtitle('Sentiment Analysis of Tweets about Brexit\n(classification by polarity)') +
 theme(plot.title = element_text(size=12, face='bold'))
+ggsave("./Twitter/images/popularidad.png")
 ```
 
 Ahora vamos a crear una nube de palabras para ver que es lo que más se usa. Lo primero será separar el texto por emociones y visualizar las palabras
@@ -208,8 +210,12 @@ termdocumentmatrix = as.matrix(termdocumentmatrix)
 colnames(termdocumentmatrix) = emociones_data
  
 # comparison word cloud
+
+png("./Twitter/images/nube.png")
 comparison.cloud(termdocumentmatrix, colors = brewer.pal(tama_emociones_data, 'Dark2'),
 scale = c(3,.5), random.order = FALSE, title.size = 1.5)
-
+dev.off()
+comparison.cloud(termdocumentmatrix, colors = brewer.pal(tama_emociones_data, 'Dark2'),
+scale = c(3,.5), random.order = FALSE, title.size = 1.5)
 ```
 

@@ -127,6 +127,27 @@ shinyUI(fluidPage(
       
       tabPanel("Top Tweeters",HTML("<div><h3> Top 20 Tweeters of hashtag </h3></div>"),plotOutput("tweetersplot"), tableOutput("tweeterstable")),
       
+      tabPanel("Emociones",HTML
+               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by popularity)
+                 </h3></div>"), plotOutput("emociones")
+      ),
+      
+      tabPanel("Popularidad",HTML
+               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by emotion)
+                 </h3></div>"), plotOutput("popularidad")
+               ),
+      
+      tabPanel("Palabras",HTML
+               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by emotion)
+                 </h3></div>"), plotOutput("palabras1"), plotOutput("palabras2")
+               ),
+      
+      tabPanel("Palabras2",HTML
+               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by emotion)
+                 </h3></div>"), plotOutput("palabras3"), plotOutput("palabras4"), plotOutput("palabras5")
+               ),
+      
+      
       tabPanel("Top Hashtags of User", textInput("user", "Enter user name", "@"),submitButton(text="Search"), plotOutput("tophashtagsplot"), HTML("<div><h3> Hashtag frequencies in the tweets of the tweeter
                                                                                                                                                   </h3></div>")  )    
       )
