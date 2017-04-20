@@ -252,21 +252,6 @@ num_android
 num_ipad
 ```
 
-Los tweets que obtenemos pertenecen a un mismo día y son publicados aproximadamente durante una hora. En la siguiente gráfica se muestran las publicaciones para iPhone, iPad y Android. 
-```{r}
-library(lubridate)
-library(scales)
-tweets_iph_an_ipa %>%
-  count(source, hour = created) %>%
-  mutate(percent = n / sum(n)) %>%
-  ggplot(aes(hour, percent, color = source)) +
-  geom_line() +
-  scale_y_continuous(labels = percent_format()) +
-  labs(x = "Hour of day (EST)",
-       y = "% of tweets",
-       color = "")
-```
-
 Podemos comparar la cantidad de tweets que se publican con y sin imágenes o links. Hay tendencia en los tres casos a que los tweets no contengan ni imágenes ni links. 
 ```{r}
 library(stringr)
