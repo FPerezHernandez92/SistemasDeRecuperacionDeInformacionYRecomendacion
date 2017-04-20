@@ -3,10 +3,12 @@
 EnsurePackage<-function(x){
   x <- as.character(x)
   if (!require(x,character.only=TRUE)){
-      install.packages(pkgs=x,repos="http://cran.r-project.org")
+      #install.packages(pkgs=x,repos="http://cran.r-project.org")
       require(x,character.only=TRUE)
     }
 }
+
+library(wordcloud)
 
 #Cargar paquetes
 PrepareTwitter<-function(){
@@ -26,7 +28,7 @@ PrepareTwitter<-function(){
 PrepareTwitter()
 
 #Authenticate Access to Twitter
-source('~/Dropbox/zMaster/zRStudio/credenciales.R')
+source('credenciales.R')
 
 #Ejecutamos el servidor
 shinyServer(function(input, output) {
@@ -38,6 +40,10 @@ shinyServer(function(input, output) {
   library(dplyr)
   library(purrr)
   library(twitteR)
+  library(rsconnect)
+  rsconnect::setAccountInfo(name='masterdatcom2017',
+                            token='19DC6E57271120AA7B6345A293C97AD3',
+                            secret='JlyRO5yazn1t/ckLcoE0pNLY46yJpmz2qzfiUbI1')
   TweetFrame<-function(twtList){
     df<- do.call("rbind",lapply(twtList,as.data.frame))
     #removes emoticons
