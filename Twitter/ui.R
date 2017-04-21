@@ -1,36 +1,18 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
 
 library(shiny)
 
 shinyUI(fluidPage(
-  
-  headerPanel("Twitter Sentiment Analysis"),
-  
+  headerPanel("Analisis sentimientos Twitter - DATCOM 2017"),
   # Getting User Inputs
-  
   sidebarPanel(
-    
-    
-    #selectInput("category", "Enter category for analysis", c("Movie", "Product", "Service", "People"), selected="Select", selectize=TRUE
-    #),
-    textInput ("searchTerm","Enter hashtag to be searched with '#'",  "#"),
-    sliderInput("maxTweets","Number of recent tweets to use for analysis",min=5,max=1000,value=100), # The max can, of course, be increased
-    #sliderInput("noOfDays","No of recent days upto which tweets are retrieved",min=1,max=7,value=7,step=1), 
-    submitButton(text="Analyse")    
+    textInput ("searchTerm","Introduce el Hastag por el cual quiere realizar la busqueda '#'",  "#Brexit"),
+    sliderInput("maxTweets","Número de tweets utilizados para el análisis",min=5,max=1000,value=100), # The max can, of course, be increased
+    submitButton(text="Analizar")    
   ),
-  
   mainPanel(
     tabsetPanel(
-      
-      tabPanel("Top Trending Tweets Today",	
-               selectInput("trendingTable","Choose location to extract trending tweets", c("Worldwide" ,  "Abu Dhabi" ,"Acapulco" , "Accra" , "Adana" , "Adela", "Aguascalientes" , 
+      tabPanel("Top Trending Tweets de hoy",	
+               selectInput("trendingTable","Elige la localización para extraer los  trending tweets", c("Worldwide" ,  "Abu Dhabi" ,"Acapulco" , "Accra" , "Adana" , "Adela", "Aguascalientes" , 
                                                                                            "Ahmedabad" ,  "Ahsa" , "Albuquerque" , "Alexandria" , "Algeria" , "Algiers" , "Amman" , "Amritsar" , "Amsterdam",  "Ankara" , "Ansan" , "Antalya" , "Antipolo" , 
                                                                                            "Argentina" ,  "Athens" ,  "Atlanta" ,             "Auckland" ,            "Austin" ,              "Australia" ,    "Austria"  , "Bahrain"     , "Baltimore"  ,         
                                                                                            "Bandung"   ,           "Bangalore" ,           "Bangkok",              "Barcelona" ,           "Barcelona",            "Barquisimeto",         "Barranquilla"  ,      
@@ -94,63 +76,50 @@ shinyUI(fluidPage(
                                                                                            "Vienna"      ,         "Vietnam"   ,           "Virginia Beach"  ,     "Vladivostok"  ,        "Volgograd"      ,      "Voronezh"    ,         "Warsaw"  ,            
                                                                                            "Washington"  ,         "Winnipeg",  "Wroclaw"      ,        "Yekaterinburg",        "Yokohama"  ,  "Yongin",              
                                                                                            "Zamboanga City" ,      "Zapopan",              "Zaporozhye"       ,    "Zaragoza"       ,      "Zurich"  ), selected = "Worldwide", selectize = FALSE), 
-               submitButton(text="Search"),    HTML("<div><h3> The table below shows the top trending 
-                                                    hashtags on Twitter of the location you have chosen. These are the hot topics today! </h3></div>"),
+               submitButton(text="Buscar"),    HTML("<div><h3> La siguiente tabla muestra los hashtags de 
+                                                    tendencias en Twitter de la ubicación que ha elegido. Estos son los temas candentes de hoy! </h3></div>"),
                tableOutput("trendtable"),
                HTML
                ("<div> </div>")),
-      
-      
-      tabPanel("WordCloud",HTML("<div><h3>Most used words associated with the hashtag</h3></div>"),plotOutput("word"),
+      tabPanel("WordCloud",HTML("<div><h3>Palabras más utilizadas asociadas con el hashtag</h3></div>"),plotOutput("word"),
                HTML
-               ("<div><h4> A word cloud is a visual representation of text data, typically used to depict keyword metadata (tags) on websites, or to visualize free form text.
-                 This format is useful for quickly perceiving the most prominent terms and for locating a term alphabetically to determine its relative prominence.
+               ("</br></br></br></br></br></br></br><div><h4> Una nube de palabras es una representación visual de los datos de texto, normalmente utilizados para representar metadatos 
+de palabras clave (etiquetas) en sitios web o para visualizar texto en forma libre. 
+Este formato es útil para percibir rápidamente los términos más prominentes y para localizar un término 
+alfabéticamente para determinar su prominencia relativa.
                  </h4></div>")),
-      
-      
-      tabPanel("Histogram",HTML
-               ("<div><h3> Histograms graphically depict the positivity or negativity of peoples' opinion about of the hashtag
+      tabPanel("Histogramas",HTML
+               ("<div><h3>Los histogramas representan gráficamente la positividad o negatividad de la opinión de las personas sobre el hashtag
                  </h3></div>"), plotOutput("histPos"), plotOutput("histNeg"), plotOutput("histScore")
                ),
-      
-      
-      tabPanel("Pie Chart",HTML("<div><h3>Depicting sentiment on a scale of 5</h3></div>"), plotOutput("piechart"),HTML
-               ("<div><h4> A pie chart is a circular statistical graphic, which is divided into slices to illustrate the sentiment of the hashtag. In a pie chart, the arc length 
-                 of each slice (and consequently its central angle and area), is proportional to the quantity it represents.</h4></div>")
-               
+      tabPanel("Pie Chart",HTML("<div><h3>Representación del sentimiento en una escala de 5</h3></div>"), plotOutput("piechart"),HTML
+               ("<div><h4> Un gráfico circular es un gráfico estadístico circular, que se divide en rodajas para ilustrar el sentimiento del hashtag. En un gráfico circular, la longitud del arco de cada 
+                 rebanada (y consecuentemente su ángulo central y área), es proporcional a la cantidad que representa.</h4></div>")
                ),
-      
-      tabPanel("Table",HTML( "<div><h3> Depicting sentiment in a tablular form on a scale of 5 </h3></div>"), tableOutput("tabledata"),
-               HTML ("<div><h4> The table depicts the sentiment (positive, negative or neutral) of the tweets 
-                     associated with the search hashtag by showing the score for each type of sentiment. </h4></div>")),
-      
-      
-      tabPanel("Top Tweeters",HTML("<div><h3> Top 20 Tweeters of hashtag </h3></div>"),plotOutput("tweetersplot"), tableOutput("tweeterstable")),
-      
+      tabPanel("Tabla de tweets",HTML( "<div><h3> Representar el sentimiento en forma tabular en una escala de 5 </h3></div>"), tableOutput("tabledata"),
+               HTML ("<div><h4> La tabla muestra el sentimiento (positivo, negativo o neutral) de los tweets asociados con el hashtag de búsqueda 
+                     mostrando la puntuación para cada tipo de sentimiento. </h4></div>")),
+      tabPanel("Top Tweeters",HTML("<div><h3> Top 20 Tweeters por hashtag </h3></div>"),plotOutput("tweetersplot"), tableOutput("tweeterstable")),
       tabPanel("Emociones",HTML
-               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by popularity)
-                 </h3></div>"), plotOutput("emociones")
-      ),
-      
+               ("<div><h3> Analisis de sentimientos sobre el Hastag, clasificado por emociones
+                 </h3></div>"), plotOutput("emociones")),
       tabPanel("Popularidad",HTML
-               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by emotion)
-                 </h3></div>"), plotOutput("popularidad")
-               ),
-      
-      tabPanel("Palabras",HTML
-               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by emotion)
-                 </h3></div>"), plotOutput("palabras1"), plotOutput("palabras2")
-               ),
-      
-      tabPanel("Palabras2",HTML
-               ("<div><h3> Sentiment Analysis of Tweets about #hastag (classification by emotion)
-                 </h3></div>"), plotOutput("palabras3"), plotOutput("palabras4"), plotOutput("palabras5")
-               ),
-      
-      
-      tabPanel("Top Hashtags of User", textInput("user", "Enter user name", "@"),submitButton(text="Search"), plotOutput("tophashtagsplot"), HTML("<div><h3> Hashtag frequencies in the tweets of the tweeter
+               ("<div><h3> Analisis de sentimientos sobre el Hastag, clasificado por popularidad.
+                 </h3></div>"), plotOutput("popularidad")),
+      tabPanel("Comparativa",HTML
+               ("<div><h3> Tipos de Tweets en Android, iPhone y iPad. 
+                 </h3></div>"), plotOutput("palabras1"),HTML
+              ("</br></br></br></br></br></br></br></br><div><h3> Palabras relevantes para Tweets de Android, iPhone y iPad.
+                 </h3></div>"),
+              plotOutput("palabras2")),
+      tabPanel("Comparativa 2",HTML
+               ("<div><h3> Relevancia de palabras para Tweets de Android.
+                 </h3></div>"), plotOutput("palabras3"),HTML
+               ("</br></br></br></br></br></br></br></br><div><h3> Relevancia de palabras para Tweets de iPhone.
+                 </h3></div>"), plotOutput("palabras4"), HTML
+               ("</br></br></br></br></br></br></br></br><div><h3> Relevancia de palabras para Tweets de iPad.
+                 </h3></div>"), plotOutput("palabras5"), HTML
+               ("</br></br></br></br></br></br>")),
+      tabPanel("Top Hashtags de usuarios", textInput("user", "Introduce el nombre de usuario", "@CanalUGR"),submitButton(text="Buscar"), plotOutput("tophashtagsplot"), HTML("<div><h3> Hashtag frecuentes en los tweets del twitero
                                                                                                                                                   </h3></div>")  )    
-      )
-               )
-  
-               ))
+      ))))
