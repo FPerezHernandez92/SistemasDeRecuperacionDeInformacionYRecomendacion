@@ -244,7 +244,7 @@ shinyServer(function(input, output) {
     # comparison word cloud
     png("./images/nube.png", width=568, height=606)
     comparison.cloud(termdocumentmatrix, colors = brewer.pal(tama_emociones_data, 'Dark2'),
-                     scale = c(3,.5), random.order = FALSE, title.size = 1.5)
+                     scale = c(4.5,0.8), random.order = FALSE, title.size = 1.5, max.words = 150)
     dev.off()
     cat("Acabo wordcloud\n")
   }
@@ -284,11 +284,11 @@ shinyServer(function(input, output) {
       ggplot(data, aes(x=polarity)) +
         geom_bar(aes(y=..count.., fill=polarity)) +
         scale_fill_brewer(palette='RdGy') +
-        labs(x='Categorias de popularidad', y='Número de Tweets') +
+        labs(x='Categorias de polaridad', y='Número de Tweets') +
         theme(plot.title = element_text(size=12, face='bold'))
       ggsave("./images/popularidad.png", dpi=80)
     }
-    cat("Acabo análisis emociones o popularidad\n")
+    cat("Acabo análisis emociones o polaridad\n")
   }
   sacar_sentimientos <- reactive({sacar_sentimientos<-AnalisisSentimientos(tweets_limpios() )})
   output$emociones <- renderImage({
@@ -326,7 +326,7 @@ shinyServer(function(input, output) {
   
   # Plot the table above for the top 20
   d<-reactive({d<-toptweeters(  twtList() ) })
-  output$tweetersplot<-renderPlot ( barplot(head(d()$Tweets, 20),  names=head(d()$User, 20), las=2, horiz=F, main="Top 20: Tweets por Usuario", col=1) )
+  output$tweetersplot<-renderPlot ( barplot(head(d()$Tweets, 20), names.arg=head(d()$Usuario, 20), cex.names = 0.7, las=2, horiz=F, main="Top 20: Tweets por Usuario", col=1) )
   output$tweeterstable<-renderTable(head(d(),20))
   
   #Top 10 TWEETERS
@@ -377,7 +377,7 @@ shinyServer(function(input, output) {
       filter(!str_detect(text, '^"')) %>%
       count(source,
             picture = ifelse(str_detect(text, "t.co"),
-                             "Con imagenes", "Sin imagenes"))
+                             "Sin imagenes ni links", "Con imagenes o links"))
     ggplot(tweet_picture_counts, aes(source, n, fill = picture)) +
       geom_bar(stat = "identity", position = "dodge") +
       labs(x = "", y = "Número de Tweets", fill = "")
@@ -398,7 +398,7 @@ shinyServer(function(input, output) {
       ggplot(aes(word, n)) +
       geom_bar(stat = "identity") +
       xlab("Palabra") +
-      ylab("Occurrencias") +
+      ylab("Ocurrencias") +
       coord_flip()
     ggsave("./images/palabras2.png", dpi=80)
     if (comparativa == 2){
@@ -412,7 +412,7 @@ shinyServer(function(input, output) {
         ggplot(aes(word, n)) +
         geom_bar(stat = "identity") +
         xlab("Palabra") +
-        ylab("Occurrencias Android") +
+        ylab("Ocurrencias Android") +
         coord_flip()
       ggsave("./images/palabras3.png", dpi=80)
       t_words_iphone %>%
@@ -422,7 +422,7 @@ shinyServer(function(input, output) {
         ggplot(aes(word, n)) +
         geom_bar(stat = "identity") +
         xlab("Palabra") +
-        ylab("Occurrencias iPhone") +
+        ylab("Ocurrencias iPhone") +
         coord_flip()
       ggsave("./images/palabras4.png", dpi=80)
       t_words_ipad %>%
@@ -432,7 +432,7 @@ shinyServer(function(input, output) {
         ggplot(aes(word, n)) +
         geom_bar(stat = "identity") +
         xlab("Palabra") +
-        ylab("Occurrencias iPad") +
+        ylab("Ocurrencias iPad") +
         coord_flip()
       ggsave("./images/palabras5.png", dpi=80)
       cat("Acabo comparativa android, iphone y ipad\n")

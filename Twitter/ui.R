@@ -83,7 +83,7 @@ shinyUI(fluidPage(
                ("<div> </div>")),
       tabPanel("WordCloud",HTML("<div><h3>Palabras más utilizadas asociadas con el hashtag</h3></div>"),plotOutput("word"),
                HTML
-               ("</br></br></br></br></br></br></br><div><h4> Una nube de palabras es una representación visual de los datos de texto, normalmente utilizados para representar metadatos 
+               ("</br></br></br></br></br></br></br></br><div><h4> Una nube de palabras es una representación visual de los datos de texto, normalmente utilizados para representar metadatos 
 de palabras clave (etiquetas) en sitios web o para visualizar texto en forma libre. 
 Este formato es útil para percibir rápidamente los términos más prominentes y para localizar un término 
 alfabéticamente para determinar su prominencia relativa.
@@ -92,7 +92,7 @@ alfabéticamente para determinar su prominencia relativa.
                ("<div><h3>Los histogramas representan gráficamente la positividad o negatividad de la opinión de las personas sobre el hashtag
                  </h3></div>"), plotOutput("histPos"), plotOutput("histNeg"), plotOutput("histScore")
                ),
-      tabPanel("Pie Chart",HTML("<div><h3>Representación del sentimiento en una escala de 5</h3></div>"), plotOutput("piechart"),HTML
+      tabPanel("Pie Chart",HTML("<div><h3>Representación del sentimiento en gráfico chart</h3></div>"), plotOutput("piechart"),HTML
                ("<div><h4> Un gráfico circular es un gráfico estadístico circular, que se divide en rodajas para ilustrar el sentimiento del hashtag. En un gráfico circular, la longitud del arco de cada 
                  rebanada (y consecuentemente su ángulo central y área), es proporcional a la cantidad que representa.</h4></div>")
                ),
@@ -101,10 +101,10 @@ alfabéticamente para determinar su prominencia relativa.
                      mostrando la puntuación para cada tipo de sentimiento. </h4></div>")),
       tabPanel("Top Tweeters",HTML("<div><h3> Top 20 Tweeters por hashtag </h3></div>"),plotOutput("tweetersplot"), tableOutput("tweeterstable")),
       tabPanel("Emociones",HTML
-               ("<div><h3> Analisis de sentimientos sobre el Hastag, clasificado por emociones
+               ("<div><h3> Análisis de sentimientos sobre el Hastag, clasificado por emociones
                  </h3></div>"), plotOutput("emociones")),
-      tabPanel("Popularidad",HTML
-               ("<div><h3> Analisis de sentimientos sobre el Hastag, clasificado por popularidad.
+      tabPanel("Polaridad",HTML
+               ("<div><h3> Análisis de sentimientos sobre el Hastag, clasificado por polaridad.
                  </h3></div>"), plotOutput("popularidad")),
       tabPanel("Comparativa",HTML
                ("<div><h3> Tipos de Tweets en Android, iPhone y iPad. 
@@ -120,6 +120,6 @@ alfabéticamente para determinar su prominencia relativa.
                ("</br></br></br></br></br></br></br></br><div><h3> Relevancia de palabras para Tweets de iPad.
                  </h3></div>"), plotOutput("palabras5"), HTML
                ("</br></br></br></br></br></br>")),
-      tabPanel("Top Hashtags de usuarios", textInput("user", "Introduce el nombre de usuario", "@CanalUGR"),submitButton(text="Buscar"), plotOutput("tophashtagsplot"), HTML("<div><h3> Hashtag frecuentes en los tweets del twitero
+      tabPanel("Top Hashtags de usuarios", textInput("user", "Introduce el nombre de usuario", "@jeremycorbyn"),submitButton(text="Buscar"), plotOutput("tophashtagsplot"), HTML("<div><h3> Hashtag frecuentes en los tweets del twitero
                                                                                                                                                   </h3></div>")  )    
       ))))
